@@ -103,6 +103,7 @@ export class EyeballEnemy {
             linearDamping: 0.1, // Reduced damping for better movement
             fixedRotation: true // Prevent physics body from rolling
         });
+        body.userData = { isEnemy: true };
         return body;
     }
 

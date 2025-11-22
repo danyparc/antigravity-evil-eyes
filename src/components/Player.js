@@ -9,6 +9,9 @@ export class Player {
 
         this.controls = new PointerLockControls(camera, domElement);
 
+        this.health = 100;
+        this.createHealthUI();
+
         // Physics Body
         const radius = 0.5;
         this.shape = new CANNON.Sphere(radius);
@@ -19,7 +22,14 @@ export class Player {
             material: new CANNON.Material({ friction: 0.0, restitution: 0.0 }) // Low friction for smooth movement
         });
         this.body.linearDamping = 0.9; // Simulate air resistance/drag for "floaty" feel
+        this.body.userData = { isPlayer: true }; // Tag for collision
         this.physicsWorld.addBody(this.body);
+
+        this.body.addEventListener('collide', (e) => {
+            if (e.body.userData && e.body.userData.isEnemy) {
+                this.takeDamage(10);
+            }
+        });
 
         // Input state
         this.moveForward = false;
@@ -29,6 +39,56 @@ export class Player {
         this.canJump = false;
 
         this.setupInput();
+    }
+
+    createHealthUI() {
+        const healthContainer = document.createElement('div');
+        healthContainer.style.position = 'absolute';
+        healthContainer.style.top = '20px';
+        healthContainer.style.left = '20px';
+        healthContainer.style.width = '200px';
+        healthContainer.style.height = '20px';
+        healthContainer.style.backgroundColor = '#333';
+        healthContainer.style.border = '2px solid #fff';
+        document.body.appendChild(healthContainer);
+
+        this.healthBar = document.createElement('div');
+        this.healthBar.style.width = '100%';
+        this.healthBar.style.height = '100%';
+        this.healthBar.style.backgroundColor = '#00ff00';
+        this.healthBar.style.transition = 'width 0.2s';
+        healthContainer.appendChild(this.healthBar);
+    }
+
+    takeDamage(amount) {
+        this.health -= amount;
+        if (this.health < 0) this.health = 0;
+
+        this.healthBar.style.width = `${this.health}%`;
+
+        // Flash red
+        const overlay = document.createElement('div');
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+        overlay.style.pointerEvents = 'none';
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 100);
+
+        if (this.health <= 0) {
+            this.die();
+        }
+    }
+
+    die() {
+        console.log("Player died");
+        // Simple game over for now
+        document.exitPointerLock();
+        alert("GAME OVER! Reload to restart.");
+        location.reload();
     }
 
     setupInput() {
