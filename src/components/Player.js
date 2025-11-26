@@ -59,6 +59,18 @@ export class Player {
         this.healthBar.style.transition = 'width 0.2s';
         healthContainer.appendChild(this.healthBar);
 
+        // Health Text
+        this.healthText = document.createElement('div');
+        this.healthText.style.position = 'absolute';
+        this.healthText.style.top = '20px';
+        this.healthText.style.left = '230px'; // To the right of the bar
+        this.healthText.style.color = '#00ff00';
+        this.healthText.style.fontFamily = 'Arial, sans-serif';
+        this.healthText.style.fontSize = '20px';
+        this.healthText.style.fontWeight = 'bold';
+        this.healthText.innerText = '100%';
+        document.body.appendChild(this.healthText);
+
         // Crosshair
         const crosshair = document.createElement('div');
         crosshair.style.position = 'absolute';
@@ -91,6 +103,7 @@ export class Player {
         if (this.health < 0) this.health = 0;
 
         this.healthBar.style.width = `${this.health}%`;
+        this.healthText.innerText = `${this.health}%`;
 
         // Flash red
         const overlay = document.createElement('div');
