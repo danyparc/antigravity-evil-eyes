@@ -58,6 +58,32 @@ export class Player {
         this.healthBar.style.backgroundColor = '#00ff00';
         this.healthBar.style.transition = 'width 0.2s';
         healthContainer.appendChild(this.healthBar);
+
+        // Crosshair
+        const crosshair = document.createElement('div');
+        crosshair.style.position = 'absolute';
+        crosshair.style.top = '50%';
+        crosshair.style.left = '50%';
+        crosshair.style.width = '20px';
+        crosshair.style.height = '20px';
+        crosshair.style.border = '2px solid rgba(0, 255, 255, 0.8)';
+        crosshair.style.borderRadius = '50%';
+        crosshair.style.transform = 'translate(-50%, -50%)';
+        crosshair.style.pointerEvents = 'none';
+
+        // Center dot
+        const dot = document.createElement('div');
+        dot.style.position = 'absolute';
+        dot.style.top = '50%';
+        dot.style.left = '50%';
+        dot.style.width = '4px';
+        dot.style.height = '4px';
+        dot.style.backgroundColor = 'rgba(0, 255, 255, 1)';
+        dot.style.borderRadius = '50%';
+        dot.style.transform = 'translate(-50%, -50%)';
+        crosshair.appendChild(dot);
+
+        document.body.appendChild(crosshair);
     }
 
     takeDamage(amount) {

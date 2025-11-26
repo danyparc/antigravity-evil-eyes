@@ -8,12 +8,56 @@ export class Weapon {
         this.physicsWorld = physicsWorld;
         this.projectiles = [];
 
-        // Simple visual for the weapon (just a box for now attached to camera)
-        // In a real game, this would be a model
-        // Note: We are not attaching it to camera here to avoid complexity with scene graph/physics sync for now,
-        // but we will shoot from camera position.
+        this.createGunModel();
 
         document.addEventListener('click', () => this.shoot());
+    }
+
+    createGunModel() {
+        // Gun Group
+        this.gunGroup = new THREE.Group();
+        this.camera.add(this.gunGroup); // Attach to camera so it moves with view
+
+        // Textures
+        const loader = new THREE.TextureLoader();
+        const texture = loader.load('/textures/cyberpunk_gun_texture.png');
+
+        // Main Body - Smaller dimensions
+        const bodyGeometry = new THREE.BoxGeometry(0.08, 0.12, 0.35);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            map: texture,
+            color: 0x333333,
+            roughness: 0.3,
+            metalness: 0.8
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        // Position: x (right), y (down), z (forward/back)
+        body.position.set(0.25, -0.25, -0.4);
+        this.gunGroup.add(body);
+
+        // Barrel - Thinner and shorter
+        const barrelGeometry = new THREE.CylinderGeometry(0.015, 0.015, 0.25, 16);
+        barrelGeometry.rotateX(-Math.PI / 2);
+        const barrelMaterial = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            roughness: 0.5,
+            metalness: 0.9
+        });
+        const barrel = new THREE.Mesh(barrelGeometry, barrelMaterial);
+        barrel.position.set(0.25, -0.22, -0.6); // Extending from body
+        this.gunGroup.add(barrel);
+
+        // Glow details
+        const glowGeometry = new THREE.BoxGeometry(0.01, 0.01, 0.3);
+        const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        glow.position.set(0.25, -0.19, -0.4); // Top of body
+        this.gunGroup.add(glow);
+
+        // Add light from gun
+        const gunLight = new THREE.PointLight(0x00ffff, 0.2, 1);
+        gunLight.position.set(0.25, -0.2, -0.6);
+        this.gunGroup.add(gunLight);
     }
 
     shoot() {
@@ -42,9 +86,22 @@ export class Weapon {
 
         const startPos = new THREE.Vector3();
         startPos.copy(this.camera.position);
-        startPos.addScaledVector(direction, 1.0); // Closer
-        startPos.y -= 0.2; // Lower to look like it comes from a weapon
-        startPos.x += 0.2; // Slightly to the right
+
+        // Adjust spawn position to match new smaller gun model
+        // Gun body x is 0.25, y is -0.25. Barrel tip is around z -0.7 (relative to camera)
+        // We need to project this relative offset into world space based on camera direction
+
+        // Simple approximation:
+        // Move forward (Z)
+        startPos.addScaledVector(direction, 0.8);
+
+        // Move right (relative X) and down (relative Y)
+        // We need the camera's right and up vectors for this to be perfect, but for now fixed offsets might work if looking straight.
+        // Better: Construct offset vector and apply camera quaternion.
+
+        const offset = new THREE.Vector3(0.25, -0.22, 0); // Match barrel X/Y
+        offset.applyQuaternion(this.camera.quaternion);
+        startPos.add(offset);
 
         mesh.position.copy(startPos);
 
