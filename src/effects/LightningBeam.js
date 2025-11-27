@@ -7,9 +7,10 @@ export class LightningBeam {
         this.isAlive = true;
 
         // Configuration
-        this.color = 0x00FFFF; // Cyan/Electric Blue
-        this.jaggedness = 0.5; // How chaotic the line is
-        this.branches = 3;     // Max branches
+        // HDR Color: Values > 1.0 drive the bloom effect harder
+        this.color = new THREE.Color(2, 8, 20); // Super bright electric blue
+        this.jaggedness = 0.2; // Reduced chaos for a cleaner look
+        this.branches = 2;     // Fewer branches
     }
 
     // Helper to get a random offset
@@ -17,7 +18,7 @@ export class LightningBeam {
         return (Math.random() - 0.5) * magnitude;
     }
 
-    generateBolt(startPoint, endPoint, thickness = 5, depth = 0) {
+    generateBolt(startPoint, endPoint, thickness = 1, depth = 0) {
         const points = [];
         points.push(startPoint);
 
@@ -67,7 +68,7 @@ export class LightningBeam {
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const material = new THREE.LineBasicMaterial({
             color: this.color,
-            linewidth: thickness // Note: WebGL often ignores linewidth > 1
+            linewidth: 3 // Try to request thicker lines (though WebGL limitation often keeps it at 1)
         });
 
         const line = new THREE.Line(geometry, material);

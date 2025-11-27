@@ -163,10 +163,12 @@ export class EyeballEnemy {
                 this.isShooting = true;
                 this.currentShootTime = 0;
                 this.shootTimer = 0;
+                // Randomize next interval slightly more to avoid synchronized shooting
+                this.shootInterval = 3 + Math.random() * 3;
 
-                // Damage player
+                // Damage player - REDUCED DAMAGE
                 if (this.onDamagePlayer) {
-                    this.onDamagePlayer(10);
+                    this.onDamagePlayer(5); // Reduced from 10 to 5
                 }
             }
 
