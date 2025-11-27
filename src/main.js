@@ -13,6 +13,11 @@ const weapon = new Weapon(environment.scene, environment.camera, physics.world);
 const enemies = [];
 const clock = new THREE.Clock();
 
+// Game State
+let isPaused = false;
+let spawnTimer = 0;
+const spawnInterval = 3; // Seconds
+
 // Spawn enemies periodically
 function spawnEnemy() {
   if (enemies.length < 10) {
@@ -30,12 +35,54 @@ function spawnEnemy() {
   }
 }
 
-setInterval(spawnEnemy, 3000);
+// Pause UI
+const pauseOverlay = document.createElement('div');
+pauseOverlay.style.position = 'absolute';
+pauseOverlay.style.top = '50%';
+pauseOverlay.style.left = '50%';
+pauseOverlay.style.transform = 'translate(-50%, -50%)';
+pauseOverlay.style.color = 'white';
+pauseOverlay.style.fontFamily = 'Arial, sans-serif';
+pauseOverlay.style.fontSize = '48px';
+pauseOverlay.style.fontWeight = 'bold';
+pauseOverlay.style.textShadow = '0 0 10px #00ffff';
+pauseOverlay.style.display = 'none';
+pauseOverlay.innerText = 'PAUSED';
+document.body.appendChild(pauseOverlay);
+
+function togglePause() {
+  isPaused = !isPaused;
+
+  if (isPaused) {
+    pauseOverlay.style.display = 'block';
+    document.exitPointerLock();
+    clock.stop(); // Stop clock so delta time doesn't accumulate huge value
+  } else {
+    pauseOverlay.style.display = 'none';
+    player.controls.lock();
+    clock.start();
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyP') {
+    togglePause();
+  }
+});
 
 function animate() {
   requestAnimationFrame(animate);
 
+  if (isPaused) return;
+
   const dt = clock.getDelta();
+
+  // Enemy Spawning Logic
+  spawnTimer += dt;
+  if (spawnTimer >= spawnInterval) {
+    spawnEnemy();
+    spawnTimer = 0;
+  }
 
   physics.update(dt);
   player.update(dt);
@@ -59,14 +106,18 @@ instructions.style.fontFamily = 'Arial, sans-serif';
 instructions.style.fontSize = '24px';
 instructions.style.textAlign = 'center';
 instructions.style.pointerEvents = 'none';
-instructions.innerHTML = 'Click to Play<br>WASD to Move<br>Click to Shoot';
+instructions.innerHTML = 'Click to Play<br>WASD to Move<br>Click to Shoot<br>P to Pause';
 document.body.appendChild(instructions);
 
 document.addEventListener('click', () => {
-  instructions.style.display = 'none';
+  if (!isPaused) {
+    instructions.style.display = 'none';
+  }
 });
 
-// Show instructions again if unlocked
+// Show instructions again if unlocked and NOT paused
 player.controls.addEventListener('unlock', () => {
-  instructions.style.display = 'block';
+  if (!isPaused) {
+    instructions.style.display = 'block';
+  }
 });
