@@ -24,7 +24,7 @@ function spawnEnemy() {
       }
       // Spawn a new one immediately to keep the chaos
       spawnEnemy();
-    });
+    }, (amount) => player.takeDamage(amount));
     enemies.push(enemy);
     physics.addBody(enemy.body);
   }

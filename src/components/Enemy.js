@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
+import { LightningBeam } from '../effects/LightningBeam.js';
 
 export class EyeballEnemy {
-    constructor(scene, physicsWorld, playerBody, onDeath) {
+    constructor(scene, physicsWorld, playerBody, onDeath, onDamagePlayer) {
         this.scene = scene;
         this.physicsWorld = physicsWorld;
         this.playerBody = playerBody;
         this.onDeath = onDeath;
+        this.onDamagePlayer = onDamagePlayer;
         this.health = 3;
 
         this.mesh = this.createMesh();
@@ -18,6 +20,14 @@ export class EyeballEnemy {
         // Add a point light to the enemy for "psychedelic" effect
         this.light = new THREE.PointLight(0xff0000, 1, 10);
         this.scene.add(this.light);
+
+        // Lightning effect
+        this.lightningBeam = new LightningBeam(this.scene);
+        this.shootTimer = 0;
+        this.shootInterval = 2 + Math.random() * 2; // Random interval between 2-4s
+        this.isShooting = false;
+        this.shootDuration = 0.2; // How long the flash lasts
+        this.currentShootTime = 0;
 
         // Collision handling
         this.body.addEventListener('collide', (e) => {
@@ -43,6 +53,7 @@ export class EyeballEnemy {
 
     die() {
         // Cleanup
+        this.lightningBeam.cleanup();
         this.scene.remove(this.mesh);
         this.scene.remove(this.light);
         this.physicsWorld.removeBody(this.body);
@@ -132,15 +143,47 @@ export class EyeballEnemy {
             // Move towards player
             const direction = new CANNON.Vec3();
             this.playerBody.position.vsub(this.body.position, direction);
+            const distance = direction.length();
             direction.normalize();
 
             // Chase force
             const speed = 30;
-            this.body.applyForce(direction.scale(speed), this.body.position);
+            // Don't get too close, stay at shooting range
+            if (distance > 10) {
+                this.body.applyForce(direction.scale(speed), this.body.position);
+            }
 
             // Maintain height (dampen Y velocity if too high/low to prevent flying off)
             if (this.body.position.y > 5) this.body.velocity.y *= 0.9;
             if (this.body.position.y < 1) this.body.velocity.y += 1; // Push up if too low
+
+            // SHOOTING LOGIC
+            this.shootTimer += dt;
+            if (this.shootTimer > this.shootInterval && distance < 20) {
+                this.isShooting = true;
+                this.currentShootTime = 0;
+                this.shootTimer = 0;
+
+                // Damage player
+                if (this.onDamagePlayer) {
+                    this.onDamagePlayer(10);
+                }
+            }
+
+            if (this.isShooting) {
+                this.currentShootTime += dt;
+
+                // Convert CANNON Vec3 to THREE Vector3 for the visual effect
+                const start = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y, this.mesh.position.z);
+                const end = new THREE.Vector3(this.playerBody.position.x, this.playerBody.position.y, this.playerBody.position.z);
+
+                this.lightningBeam.update(start, end);
+
+                if (this.currentShootTime > this.shootDuration) {
+                    this.isShooting = false;
+                    this.lightningBeam.cleanup();
+                }
+            }
         }
     }
 }

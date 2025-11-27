@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 export class Environment {
     constructor() {
@@ -13,6 +16,7 @@ export class Environment {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
+        this.renderer.toneMapping = THREE.ReinhardToneMapping; // Better for bloom
         document.body.appendChild(this.renderer.domElement);
 
         this.setupLighting();
@@ -20,7 +24,25 @@ export class Environment {
         this.createNeonGrid();
         this.createTowers();
 
+        this.setupPostProcessing();
+
         window.addEventListener('resize', this.onWindowResize.bind(this));
+    }
+
+    setupPostProcessing() {
+        this.composer = new EffectComposer(this.renderer);
+
+        const renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+
+        // Resolution, strength, radius, threshold
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.5, // Strength
+            0.4, // Radius
+            0.85 // Threshold
+        );
+        this.composer.addPass(bloomPass);
     }
 
     createSkybox() {
@@ -96,9 +118,11 @@ export class Environment {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.composer.setSize(window.innerWidth, window.innerHeight);
     }
 
     render() {
-        this.renderer.render(this.scene, this.camera);
+        // this.renderer.render(this.scene, this.camera);
+        this.composer.render();
     }
 }
