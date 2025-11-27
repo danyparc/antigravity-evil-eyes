@@ -1,4 +1,5 @@
 # Psychedelic Cyberpunk Shooter
+<img width="1506" height="760" alt="image" src="https://github.com/user-attachments/assets/2de6d624-1373-4970-8176-75473166ee19" />
 
 A 3D browser-based First-Person Shooter (FPS) built with **Three.js** and **Cannon-es**, featuring a "Psychedelic Cyberpunk" aesthetic.
 
