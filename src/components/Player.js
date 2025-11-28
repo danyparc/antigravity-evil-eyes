@@ -122,12 +122,33 @@ export class Player {
         }
     }
 
+    setGameManager(gameManager) {
+        this.gameManager = gameManager;
+    }
+
+    reset() {
+        this.health = 100;
+        this.healthBar.style.width = '100%';
+        this.healthText.innerText = '100%';
+
+        // Reset Position
+        this.body.position.set(0, 2, 0);
+        this.body.velocity.set(0, 0, 0);
+        this.body.angularVelocity.set(0, 0, 0);
+
+        // Reset Input
+        this.moveForward = false;
+        this.moveBackward = false;
+        this.moveLeft = false;
+        this.moveRight = false;
+        this.canJump = false;
+    }
+
     die() {
         console.log("Player died");
-        // Simple game over for now
-        document.exitPointerLock();
-        alert("GAME OVER! Reload to restart.");
-        location.reload();
+        if (this.gameManager) {
+            this.gameManager.gameOver();
+        }
     }
 
     setupInput() {
