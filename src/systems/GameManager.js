@@ -184,6 +184,7 @@ export class GameManager {
         this.isGameOver = false;
         this.isPaused = false;
         this.score = 0;
+        this.spawnTimer = 0;
         this.updateScoreUI();
 
         this.ui.gameOver.style.display = 'none';
@@ -193,8 +194,14 @@ export class GameManager {
         this.player.reset();
 
         // Clear Enemies
-        this.enemies.forEach(enemy => enemy.die(true)); // true = force cleanup without effects if needed
-        this.enemies = [];
+        // Create a copy to iterate because onDeath might modify the array or trigger spawns
+        const enemiesToClear = [...this.enemies];
+        this.enemies = []; // Clear main array immediately
+
+        enemiesToClear.forEach(enemy => {
+            enemy.onDeath = null; // Prevent callback (which spawns new enemies)
+            enemy.die(true);
+        });
 
         this.player.controls.lock();
     }
