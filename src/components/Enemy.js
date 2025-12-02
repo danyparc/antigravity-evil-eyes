@@ -187,16 +187,20 @@ export class EyeballEnemy {
             if (this.isCharging) {
                 this.currentChargeTime += dt;
 
-                // Visual Telegraph: Pulse Red/Orange
+                // Visual Telegraph: Smooth Intensity Ramp
                 const chargeProgress = this.currentChargeTime / this.chargeDuration;
-                // Flash faster as we get closer to shooting
-                const flashFreq = 10 + (chargeProgress * 20);
-                const intensity = 0.5 + Math.sin(Date.now() * 0.01 * flashFreq) * 0.5;
+
+                // Ramp up intensity exponentially for a dramatic "power up" feel
+                // Starts at 0, ends at 1.0
+                const ramp = Math.pow(chargeProgress, 2);
+
+                // Base intensity + ramped extra intensity
+                // We want it to get VERY bright at the end
+                const intensity = 0.2 + (ramp * 5.0);
 
                 // Electric Blue glow warning
-                // Matching LightningBeam color (2, 8, 20) roughly scaled
                 this.mesh.material.emissive.setRGB(0.2 * intensity, 0.8 * intensity, 2.0 * intensity);
-                this.light.intensity = 1 + (intensity * 2);
+                this.light.intensity = 1 + (intensity * 3);
                 this.light.color.setRGB(0.2, 0.8, 2.0);
 
                 if (this.currentChargeTime >= this.chargeDuration) {
