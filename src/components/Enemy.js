@@ -25,6 +25,12 @@ export class EyeballEnemy {
         this.lightningBeam = new LightningBeam(this.scene);
         this.shootTimer = 0;
         this.shootInterval = 2 + Math.random() * 2; // Random interval between 2-4s
+
+        // Attack States
+        this.isCharging = false;
+        this.chargeDuration = 1.0; // 1 second warning
+        this.currentChargeTime = 0;
+
         this.isShooting = false;
         this.shootDuration = 0.2; // How long the flash lasts
         this.currentShootTime = 0;
@@ -36,6 +42,14 @@ export class EyeballEnemy {
             }
         });
     }
+
+    // ... (takeDamage, die, createMesh, createBody methods remain unchanged)
+    // I will use replace_file_content on the update method specifically to avoid context issues if possible, 
+    // but here I am replacing a large chunk. Let's target the update method specifically in a separate call or be very precise.
+    // Actually, I'll just replace the constructor part first, then the update method.
+    // Wait, the tool allows replacing a chunk. I'll replace the constructor init and the update method.
+    // Let's do the constructor init first.
+
 
     takeDamage() {
         this.health--;
@@ -158,17 +172,51 @@ export class EyeballEnemy {
             if (this.body.position.y < 1) this.body.velocity.y += 1; // Push up if too low
 
             // SHOOTING LOGIC
-            this.shootTimer += dt;
-            if (this.shootTimer > this.shootInterval && distance < 20) {
-                this.isShooting = true;
-                this.currentShootTime = 0;
-                this.shootTimer = 0;
-                // Randomize next interval slightly more to avoid synchronized shooting
-                this.shootInterval = 3 + Math.random() * 3;
+            // State Machine: Idle -> Charging -> Shooting -> Idle
 
-                // Damage player - REDUCED DAMAGE
-                if (this.onDamagePlayer) {
-                    this.onDamagePlayer(5); // Reduced from 10 to 5
+            if (!this.isCharging && !this.isShooting) {
+                this.shootTimer += dt;
+                if (this.shootTimer > this.shootInterval && distance < 20) {
+                    // Start Charging
+                    this.isCharging = true;
+                    this.currentChargeTime = 0;
+                    this.shootTimer = 0;
+                }
+            }
+
+            if (this.isCharging) {
+                this.currentChargeTime += dt;
+
+                // Visual Telegraph: Pulse Red/Orange
+                const chargeProgress = this.currentChargeTime / this.chargeDuration;
+                // Flash faster as we get closer to shooting
+                const flashFreq = 10 + (chargeProgress * 20);
+                const intensity = 0.5 + Math.sin(Date.now() * 0.01 * flashFreq) * 0.5;
+
+                // Electric Blue glow warning
+                // Matching LightningBeam color (2, 8, 20) roughly scaled
+                this.mesh.material.emissive.setRGB(0.2 * intensity, 0.8 * intensity, 2.0 * intensity);
+                this.light.intensity = 1 + (intensity * 2);
+                this.light.color.setRGB(0.2, 0.8, 2.0);
+
+                if (this.currentChargeTime >= this.chargeDuration) {
+                    // Finish Charging, Start Shooting
+                    this.isCharging = false;
+                    this.isShooting = true;
+                    this.currentShootTime = 0;
+
+                    // Reset visuals
+                    this.mesh.material.emissive.setHex(0x000000); // Or whatever base emissive
+                    this.light.intensity = 1;
+                    this.light.color.setHex(0xff0000);
+
+                    // Randomize next interval
+                    this.shootInterval = 3 + Math.random() * 3;
+
+                    // Damage player
+                    if (this.onDamagePlayer) {
+                        this.onDamagePlayer(5);
+                    }
                 }
             }
 
